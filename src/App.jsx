@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useDebounce } from 'react-use';
 import Search from './components/search';
 import MovieCard from './components/MovieCard';
 
@@ -16,38 +17,39 @@ const App = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [movieList, setMovieList] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [debounceSearchTerm, setDebounceSearchTerm] = useState('');
 
-  const fetchMovies = async () => {
+  const fetchMovies = async (query = '') => {
     setIsLoading(true);
     setErrorMessage('');
 
-    try {
-      const endpoint = `${API_BASE_URL}/discover/movie?sort_by=popularity.desc`;
-      const response = await fetch(endpoint, API_OPTIONS);
+    const endpoint = query
+      ? `${API_BASE_URL}/search/movie?query=${encodeURIComponent(query)}`
+      : `${API_BASE_URL}/discover/movie?sort_by=popularity.desc`;
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch movies');
-      }
-
-      const data = await response.json();
-
-      setMovieList(data.results || []);
-    } catch (error) {
-      if (error instanceof SyntaxError) {
-        setMovieList([]);
-      }
-
-      console.error(`Error fetching movies ${{ error }}`);
-      setErrorMessage('Error fetching movies, please try again later');
-    } finally {
-      setIsLoading(false);
-    }
+    fetch(endpoint, API_OPTIONS)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Failed to fetch movies');
+        }
+        const data = response.json();
+        return data;
+      })
+      .then((data) => setMovieList(data.results || []))
+      .catch((e) => {
+        console.error(`Error fetching movies ${{ e }}`);
+        setErrorMessage('Error fetching movies, please try again later');
+      })
+      .finally(() => setIsLoading(false));
   };
 
+  // debounce the query for 800ms
+  useDebounce(() => setDebounceSearchTerm(searchTerm), 800, [searchTerm]);
+
   useEffect(() => {
-    fetchMovies();
-  }, []);
+    fetchMovies(debounceSearchTerm);
+  }, [debounceSearchTerm]);
 
   return (
     <main>
@@ -60,7 +62,7 @@ const App = () => {
           <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
           {/* <h1 className="text-white">{searchTerm}</h1> */}
         </header>
-        <section className="w-full max-w-5xl">
+        <section className="w-full max-w-5xl min-h-[2437px]">
           <h2 className="text-3xl text-white mb-5">All Movies</h2>
           <hr className="mb-5 border-white border-4" />
           {isLoading ? (
