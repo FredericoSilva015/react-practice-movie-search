@@ -52,7 +52,7 @@ const App = () => {
   return (
     <main>
       <div className="pattern" />
-      <div className="wrapper flex items-center flex-col w-full h-dvw bg-[url('/movie-theater-background-image.jpg')] bg-center bg-no-repeat bg-cover">
+      <div className="wrapper flex items-center flex-col bg-[url('/movie-theater-background-image.jpg')] bg-center bg-no-repeat bg-cover">
         <header className="max-w-5xl flex items-center flex-col">
           <h1 className="text-center text-3xl text-white mb-5">
             Find <span>Movies</span> You'll Enjoy With out the Hassle
@@ -68,7 +68,7 @@ const App = () => {
           ) : errorMessage ? (
             <p className="text-red-500">{errorMessage}</p>
           ) : (
-            <ul>
+            <ul className="grid grid-cols-4 gap-x-2.5 gap-y-2.5">
               {movieList.map((movie) => (
                 <MovieCard key={movie.id} movie={movie} />
               ))}
