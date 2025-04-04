@@ -33,8 +33,7 @@ const App = () => {
         if (!response.ok) {
           throw new Error('Failed to fetch movies');
         }
-        const data = response.json();
-        return data;
+        return response.json();
       })
       .then((data) => setMovieList(data.results || []))
       .catch((e) => {
@@ -60,7 +59,6 @@ const App = () => {
             Find <span>Movies</span> You'll Enjoy With out the Hassle
           </h1>
           <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-          {/* <h1 className="text-white">{searchTerm}</h1> */}
         </header>
         <section className="w-full max-w-5xl min-h-[2437px]">
           <h2 className="text-3xl text-white mb-5">All Movies</h2>
