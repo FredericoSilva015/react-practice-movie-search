@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
+import { getTrendingMovies, updateSearchCount } from './appwrite';
 import Search from './components/search';
 import MovieCard from './components/MovieCard';
 
@@ -18,6 +19,7 @@ const App = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [movieList, setMovieList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [trendingMovies, setTrendingMovies] = useState([]);
   const [debounceSearchTerm, setDebounceSearchTerm] = useState('');
 
   const fetchMovies = async (query = '') => {
@@ -35,7 +37,12 @@ const App = () => {
         }
         return response.json();
       })
-      .then((data) => setMovieList(data.results || []))
+      .then((data) => {
+        if (query && data.results.length > 0) {
+          updateSearchCount(query, data.results[0]);
+        }
+        return setMovieList(data.results || []);
+      })
       .catch((e) => {
         console.error(`Error fetching movies ${{ e }}`);
         setErrorMessage('Error fetching movies, please try again later');
@@ -43,12 +50,25 @@ const App = () => {
       .finally(() => setIsLoading(false));
   };
 
+  const loadTrendingMovies = async () => {
+    try {
+      const movies = await getTrendingMovies();
+
+      setTrendingMovies(movies);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   // debounce the query for 800ms
   useDebounce(() => setDebounceSearchTerm(searchTerm), 800, [searchTerm]);
 
   useEffect(() => {
     fetchMovies(debounceSearchTerm);
   }, [debounceSearchTerm]);
+
+  useEffect(() => {
+    loadTrendingMovies();
+  }, []);
 
   return (
     <main>
@@ -60,6 +80,27 @@ const App = () => {
           </h1>
           <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         </header>
+        {trendingMovies.length > 0 && (
+          <section className="w-full max-w-5xl">
+            <h2 className="text-3xl text-white mb-5">Trending</h2>
+            <hr className="mb-5 border-white border-4" />
+            <ul className="flex">
+              {trendingMovies.map((movie, index) => (
+                <li key={movie.$id}>
+                  <p className="text-3xl text-white">{index + 1}</p>
+                  <img
+                    src={
+                      movie.poster_url
+                        ? movie.poster_url
+                        : '/image-not-found.jpg'
+                    }
+                    alt={movie.title}
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         <section className="w-full max-w-5xl min-h-[2437px]">
           <h2 className="text-3xl text-white mb-5">All Movies</h2>
           <hr className="mb-5 border-white border-4" />
